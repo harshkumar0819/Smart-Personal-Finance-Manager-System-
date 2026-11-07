@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% import "macros/components.html" as ui %}
+
+{% block title %}Monthly Budgets — FinWise Smart Personal Finance{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Header Banner -->
+    <div class="bg-gradient-to-r from-amber-600 to-orange-700 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-semibold uppercase tracking-wider text-amber-100 mb-3 border border-white/20">
+                <span class="w-2 h-2 rounded-full bg-amber-300"></span>
+                Monthly Budget Targets
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Monthly Budgets
+            </h1>
+            <p class="text-amber-100 text-sm sm:text-base mt-2 max-w-2xl leading-relaxed">
+                Set category spending limits, track consumption percentages against real expenses, and stay on target.
+            </p>
+        </div>
+
+        <div class="shrink-0">
+            <a href="#set-budget-card" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-amber-900 text-xs font-bold shadow-sm hover:bg-amber-50 transition-colors">
+                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                + Set Budget Target
+            </a>
+        </div>
+    </div>
+
+    <!-- Set Budget Form & Active Budgets Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Set Budget Form (1 Column on Large) -->
+        <div id="set-budget-card" class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm h-fit">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                    🎯
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Set Monthly Budget</h3>
+                    <p class="text-xs text-slate-500">Define maximum monthly spending</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('finance.set_budget') }}" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label for="category" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Expense Category <span class="text-rose-500">*</span>
+                    </label>
+                    <select 
+                        id="category" 
+                        name="category" 
+                        required
+                        class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="monthly_limit" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Monthly Limit (₹) <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="1" 
+                        id="monthly_limit" 
+                        name="monthly_limit" 
+                        placeholder="e.g. 15000.00" 
+                        required 
+                        class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                </div>
+
+                <button 
+                    type="submit" 
+                    class="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Save Budget Target
+                </button>
+            </form>
+        </div>
+
+        <!-- Active Budgets List (2 Columns on Large) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Current Month Budget Thresholds</h3>
+                        <p class="text-xs text-slate-500">Calculated automatically against your actual logged expenses this month</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        {{ budgets|length }} Active Targets
+                    </span>
+                </div>
+
+                {% if budgets %}
+                <div class="space-y-6">
+                    {% for b in budgets %}
+                    <div class="p-4 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-colors bg-slate-50/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-slate-800">{{ b.category }}</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold
+                                    {% if b.status_color == 'emerald' %} bg-emerald-100 text-emerald-800
+                                    {% elif b.status_color == 'amber' %} bg-amber-100 text-amber-800
+                                    {% else %} bg-rose-100 text-rose-800 {% endif %}">
+                                    {{ b.status }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-slate-700">
+                                    ₹{{ "{:,.2f}".format(b.spent) }} / ₹{{ "{:,.2f}".format(b.monthly_limit) }} ({{ b.percentage }}%)
+                                </span>
+                                <form method="POST" action="{{ url_for('finance.delete_budget', budget_id=b._id) }}" onsubmit="return confirm('Remove budget for {{ b.category }}?');">
+                                    <button type="submit" class="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50" title="Delete budget">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                            <div class="{{ b.bar_color }} h-2.5 rounded-full transition-all duration-500" style="width: {{ b.bar_percentage }}%"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-[11px] text-slate-500 mt-2">
+                            <span>
+                                {% if b.remaining > 0 %}
+                                Remaining: <strong class="text-slate-700">₹{{ "{:,.2f}".format(b.remaining) }}</strong>
+                                {% else %}
+                                <strong class="text-rose-600">Over budget by ₹{{ "{:,.2f}".format(b.spent - b.monthly_limit) }}</strong>
+                                {% endif %}
+                            </span>
+                            <span>Limit: ₹{{ "{:,.2f}".format(b.monthly_limit) }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="py-12 px-4 text-center text-slate-500">
+                    <div class="flex flex-col items-center justify-center space-y-2">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-1">
+                            🎯
+                        </div>
+                        <p class="font-bold text-slate-700">No monthly budgets configured</p>
+                        <p class="text-xs text-slate-400 max-w-sm">Use the form on the left to set spending caps for categories like Food & Dining or Transit. The system will track your progress in real time.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="pt-6 mt-6 border-t border-slate-100 text-xs text-slate-500 text-center">
+                Budgets automatically reset their consumption tracking at the start of each month.
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

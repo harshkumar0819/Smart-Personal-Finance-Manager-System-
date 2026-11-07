@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+{% import "macros/components.html" as ui %}
+
+{% block title %}FinWise — Smart Personal Finance and Expense Management System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- ============================================================== -->
+    <!-- Welcome Header Banner                                          -->
+    <!-- ============================================================== -->
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-semibold uppercase tracking-wider text-emerald-100 mb-3 border border-white/20">
+                <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
+                {% if current_user %}Personal Finance Dashboard{% else %}FinWise Financial System{% endif %}
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                FinWise — Smart Personal Finance and Expense Management System
+            </h1>
+            <p class="text-emerald-100 text-sm sm:text-base mt-2 max-w-2xl leading-relaxed">
+                {% if current_user %}
+                Welcome back, <span class="font-bold text-white">{{ current_user.name }}</span>! Here is your real-time financial overview.
+                {% else %}
+                Smart Personal Finance and Expense Management System. Track earnings, monitor daily expenses, set budgets, and achieve savings targets.
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="shrink-0 flex flex-col sm:flex-row gap-3">
+            {% if current_user %}
+            <div class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30 text-center">
+                <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
+                <span>User: {{ current_user.name }}</span>
+            </div>
+            {% else %}
+            <span class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30 text-center">
+                Sample Preview Data
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not current_user %}
+    <!-- Guest Preview Banner (Honest disclaimer for demo visitors) -->
+    <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs sm:text-sm text-emerald-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-2.5">
+            <span class="text-lg">💡</span>
+            <span><strong>Guest Demo Mode:</strong> You are viewing simulated sample preview data for evaluation. Sign in or create an account to record your real personal transactions and budgets.</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ url_for('auth.login') }}" class="px-3.5 py-1.5 bg-white text-emerald-700 font-bold rounded-lg border border-emerald-200 hover:bg-emerald-100/60 transition-colors text-xs">Log In</a>
+            <a href="{{ url_for('auth.register') }}" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors text-xs">Create Account</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================== -->
+    <!-- Smart Budget Overrun Alert Banner                              -->
+    <!-- ============================================================== -->
+    {% if current_user and budget_alerts %}
+    <div class="space-y-2">
+        {% for alert in budget_alerts %}
+        <div class="p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs sm:text-sm shadow-xs
+            {% if alert.is_overrun %} bg-rose-50 border-rose-200 text-rose-900 {% else %} bg-amber-50 border-amber-200 text-amber-900 {% endif %}">
+            <div class="flex items-center gap-2.5">
+                <span class="text-lg">{% if alert.is_overrun %}🚨{% else %}⚠️{% endif %}</span>
+                <span>
+                    <strong>{% if alert.is_overrun %}Budget Exceeded:{% else %}Budget Caution:{% endif %}</strong>
+                    You have spent <strong>₹{{ "{:,.2f}".format(alert.spent) }}</strong> of your <strong>₹{{ "{:,.2f}".format(alert.monthly_limit) }}</strong> limit for <strong>{{ alert.category }}</strong> ({{ alert.percentage }}%).
+                    {% if alert.is_overrun %}
+                    Exceeded by <strong class="text-rose-700">₹{{ "{:,.2f}".format(alert.spent - alert.monthly_limit) }}</strong>.
+                    {% else %}
+                    <strong>₹{{ "{:,.2f}".format(alert.remaining) }}</strong> remaining this month.
+                    {% endif %}
+                </span>
+            </div>
+            <a href="{{ url_for('finance.budgets') }}" class="px-3 py-1.5 bg-white font-bold rounded-lg border text-xs shrink-0 hover:bg-slate-50 transition-colors
+                {% if alert.is_overrun %} border-rose-300 text-rose-800 {% else %} border-amber-300 text-amber-800 {% endif %}">
+                Manage Budgets &rarr;
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ============================================================== -->
+    <!-- 1. Four Key Performance Indicator (KPI) Cards                 -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {% if current_user and summary %}
+        {{ ui.kpi_card(
+            title="Total Balance", 
+            value="₹" ~ "{:,.2f}".format(summary.total_balance), 
+            subtitle="Current Net Worth", 
+            icon_name="wallet", 
+            trend_direction="up" if summary.total_balance >= 0 else "down", 
+            trend_text="Live", 
+            color="emerald" if summary.total_balance >= 0 else "rose"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Monthly Income", 
+            value="₹" ~ "{:,.2f}".format(summary.monthly_income), 
+            subtitle="Current Month Revenue", 
+            icon_name="trending-up", 
+            trend_direction="up", 
+            trend_text="Earnings", 
+            color="indigo"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Monthly Expenses", 
+            value="₹" ~ "{:,.2f}".format(summary.monthly_expenses), 
+            subtitle="Current Month Spending", 
+            icon_name="trending-down", 
+            trend_direction="down", 
+            trend_text="Spending", 
+            color="rose"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Active Budgets", 
+            value=(budgets|length|string ~ " Categories") if budgets else "0 Categories", 
+            subtitle=(budget_alerts|length|string ~ " Near/Over Limit") if budget_alerts else ("All Limits On Track" if budgets else "No Budgets Set"), 
+            icon_name="target", 
+            trend_direction="down" if budget_alerts else "up", 
+            trend_text="Warning" if budget_alerts else "On Track", 
+            color="amber"
+        ) }}
+        {% else %}
+        {{ ui.kpi_card(
+            title="Total Balance", 
+            value="₹1,24,500.00", 
+            subtitle="Sample Net Worth (Demo)", 
+            icon_name="wallet", 
+            trend_direction="up", 
+            trend_text="Demo", 
+            color="emerald"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Monthly Income", 
+            value="₹85,000.00", 
+            subtitle="Sample Income (Demo)", 
+            icon_name="trending-up", 
+            trend_direction="up", 
+            trend_text="Demo", 
+            color="indigo"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Monthly Expenses", 
+            value="₹38,250.00", 
+            subtitle="Sample Expenses (Demo)", 
+            icon_name="trending-down", 
+            trend_direction="down", 
+            trend_text="Demo", 
+            color="rose"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Active Budgets", 
+            value="4 Categories", 
+            subtitle="Sample Limits (Demo)", 
+            icon_name="target", 
+            trend_direction="up", 
+            trend_text="Demo", 
+            color="amber"
+        ) }}
+        {% endif %}
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- Quick Actions Toolbar                                          -->
+    <!-- ============================================================== -->
+    {% if current_user %}
+    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Quick Actions:</span>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ url_for('finance.income') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold transition-colors">
+                <span>+ Add Income</span>
+            </a>
+            <a href="{{ url_for('finance.expenses') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-colors">
+                <span>+ Log Expense</span>
+            </a>
+            <a href="{{ url_for('finance.goals') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 text-xs font-bold transition-colors">
+                <span>🎯 Savings Goals</span>
+            </a>
+            <a href="{{ url_for('finance.budgets') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 text-xs font-bold transition-colors">
+                <span>📊 Budgets</span>
+            </a>
+            <a href="{{ url_for('finance.export_transactions_csv') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 text-xs font-bold transition-colors">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================== -->
+    <!-- 2. Analytics Visualizations Section (Chart.js)                -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Cash Flow Bar Chart (2 Cols on Large) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Cash Flow Comparison</h3>
+                    <p class="text-xs text-slate-500">Monthly Income vs. Expenses (Last 6 Months)</p>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-1 {% if current_user %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-600{% endif %} rounded-md">
+                    {% if current_user %}Live Data{% else %}Chart.js Preview{% endif %}
+                </span>
+            </div>
+            <div class="relative h-64 sm:h-72 w-full">
+                <canvas id="cashFlowChart"
+                        {% if current_user and summary %}
+                        data-labels='{{ summary.charts.cash_flow.labels | tojson }}'
+                        data-income='{{ summary.charts.cash_flow.income | tojson }}'
+                        data-expenses='{{ summary.charts.cash_flow.expenses | tojson }}'
+                        {% endif %}></canvas>
+            </div>
+        </div>
+
+        <!-- Expense Category Breakdown Doughnut (1 Col on Large) -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Expense Breakdown</h3>
+                    <p class="text-xs text-slate-500">Distribution across categories</p>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">
+                    {% if current_user %}By Category{% else %}Sample Breakdown{% endif %}
+                </span>
+            </div>
+            <div class="relative h-64 sm:h-72 w-full flex items-center justify-center">
+                <canvas id="categoryChart"
+                        {% if current_user and summary %}
+                        data-labels='{{ summary.charts.categories.labels | tojson }}'
+                        data-values='{{ summary.charts.categories.data | tojson }}'
+                        data-colors='{{ summary.charts.categories.colors | tojson }}'
+                        {% endif %}></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 3. Recent Transactions Table & Budgets Widgets                -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <!-- Recent Transactions Table (2 Columns on XL) -->
+        <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col justify-between">
+            <div>
+                <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Recent Transactions</h3>
+                        <p class="text-xs text-slate-500">
+                            {% if current_user %}
+                            Latest recorded earnings and expenses
+                            {% else %}
+                            Showing sample transaction records for UI demonstration
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if current_user %}
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Live User Account
+                        </span>
+                        <a href="{{ url_for('finance.expenses') }}" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">
+                            View All &rarr;
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                <th class="py-3 px-4">Transaction Details</th>
+                                <th class="py-3 px-4 hidden sm:table-cell">Category</th>
+                                <th class="py-3 px-4 hidden md:table-cell">Date</th>
+                                <th class="py-3 px-4 text-right">Amount</th>
+                                <th class="py-3 px-4 text-center hidden lg:table-cell">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if current_user %}
+                                {% if summary and summary.recent_transactions %}
+                                    {% for t in summary.recent_transactions %}
+                                    <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
+                                        <td class="py-3.5 px-4">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0
+                                                    {% if t.type == 'income' %} bg-emerald-50 text-emerald-600 border border-emerald-100
+                                                    {% else %} bg-rose-50 text-rose-600 border border-rose-100 {% endif %}">
+                                                    {% if t.type == 'income' %}
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                                                    </svg>
+                                                    {% else %}
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+                                                    </svg>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm font-semibold text-slate-800 leading-tight">{{ t.title }}</p>
+                                                    <p class="text-xs text-slate-500 sm:hidden">{{ t.date.strftime('%d %b %Y') if t.date else '' }}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3.5 px-4 hidden sm:table-cell">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700">
+                                                {{ t.category }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-xs text-slate-500 hidden md:table-cell">
+                                            {{ t.date.strftime('%d %b %Y') if t.date else '' }}
+                                        </td>
+                                        <td class="py-3.5 px-4 text-right">
+                                            <span class="text-sm font-bold {% if t.type == 'income' %} text-emerald-600 {% else %} text-rose-600 {% endif %}">
+                                                {% if t.type == 'income' %}+{% else %}-{% endif %}₹{{ "{:,.2f}".format(t.amount) }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-center hidden lg:table-cell">
+                                            {{ ui.badge('Completed', 'emerald') }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="py-10 px-4 text-center text-slate-500 text-sm">
+                                        <div class="flex flex-col items-center justify-center space-y-2">
+                                            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-1">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                                </svg>
+                                            </div>
+                                            <p class="font-bold text-slate-800">No transactions recorded yet</p>
+                                            <p class="text-xs text-slate-400 max-w-sm">Your personal ledger is clean. Add your first income or expense to see calculations update in real time.</p>
+                                            <div class="flex items-center gap-2 pt-2">
+                                                <a href="{{ url_for('finance.income') }}" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700">+ Add Income</a>
+                                                <a href="{{ url_for('finance.expenses') }}" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700">+ Add Expense</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% else %}
+                            {{ ui.transaction_row(title="Monthly Salary Credit", category="Income", date="20 Oct 2026", amount=75000.00, type="income", status="Completed") }}
+                            {{ ui.transaction_row(title="Modern Supermarket", category="Food & Groceries", date="18 Oct 2026", amount=4250.00, type="expense", status="Completed") }}
+                            {{ ui.transaction_row(title="Fiber Internet & Electricity", category="Utilities", date="15 Oct 2026", amount=2850.00, type="expense", status="Completed") }}
+                            {{ ui.transaction_row(title="Freelance Design Gig", category="Side Income", date="12 Oct 2026", amount=10000.00, type="income", status="Completed") }}
+                            {{ ui.transaction_row(title="Artisan Coffee & Lunch", category="Dining Out", date="10 Oct 2026", amount=620.00, type="expense", status="Completed") }}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                <span class="text-xs font-medium text-slate-500">
+                    {% if current_user %}
+                    Logged in as {{ current_user.email }}
+                    {% else %}
+                    Sample preview data for demonstration
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Budget Consumption Progress (1 Column on XL) -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-6">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-bold text-slate-800">Budget Thresholds</h3>
+                    <span class="text-xs font-semibold text-slate-500">{% if current_user %}Monthly Limits{% else %}Sample Limits (Demo){% endif %}</span>
+                </div>
+
+                {% if current_user %}
+                    {% if budgets %}
+                    <div class="space-y-4">
+                        {% for b in budgets[:4] %}
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-700">{{ b.category }}</span>
+                                <span class="{% if b.status_color == 'rose' %}text-rose-600 font-bold{% else %}text-slate-500{% endif %}">
+                                    ₹{{ "{:,.2f}".format(b.spent) }} / ₹{{ "{:,.2f}".format(b.monthly_limit) }} ({{ b.percentage }}%)
+                                </span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2">
+                                <div class="{{ b.bar_color }} h-2 rounded-full" style="width: {{ b.bar_percentage }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="py-6 text-center text-slate-500 text-xs">
+                        <p class="font-medium text-slate-700">No monthly budgets configured yet.</p>
+                        <a href="{{ url_for('finance.budgets') }}" class="text-emerald-600 hover:text-emerald-700 font-bold underline mt-1 inline-block">Set Category Budgets &rarr;</a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                <div class="space-y-4">
+                    <!-- Category 1 -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-slate-700">Food & Dining</span>
+                            <span class="text-slate-500">₹9,500 / ₹12,000 (79%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="bg-emerald-500 h-2 rounded-full" style="width: 79%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Category 2 -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-slate-700">Housing & Rent</span>
+                            <span class="text-slate-500">₹15,000 / ₹15,000 (100%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Category 3 -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-slate-700">Entertainment & Leisure</span>
+                            <span class="text-rose-600 font-bold">₹4,500 / ₹5,000 (90% Warning)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="bg-rose-500 h-2 rounded-full" style="width: 90%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Category 4 -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-slate-700">Transit & Fuel</span>
+                            <span class="text-slate-500">₹5,000 / ₹8,000 (62%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="bg-amber-500 h-2 rounded-full" style="width: 62%"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 text-center mt-3">Sample budget categories for interface demonstration</p>
+                {% endif %}
+            </div>
+
+            <!-- Quick Add / Form Entry Box -->
+            <div class="pt-4 border-t border-slate-100">
+                {% if current_user %}
+                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Quick Expense Entry</h4>
+                <form method="POST" action="{{ url_for('finance.add_transaction') }}" class="space-y-3">
+                    <input type="hidden" name="type" value="expense">
+                    <input type="hidden" name="redirect_to" value="expenses">
+                    <input type="text" id="title" name="title" placeholder="Expense Description (e.g. Coffee, Bus ticket)" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" step="0.01" min="0.01" name="amount" placeholder="Amount (₹)" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white">
+                        <select name="category" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                            <option value="Food & Dining">Food & Dining</option>
+                            <option value="Utilities & Bills">Utilities</option>
+                            <option value="Transit & Fuel">Transit</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
+                        + Add Expense Record
+                    </button>
+                </form>
+                {% else %}
+                <div class="space-y-3">
+                    {{ ui.input_field(name="sample_title", label="Quick Expense Name", placeholder="e.g. Books, Bus Pass", value="", required=false) }}
+                    <button type="button" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
+                        + Add Transaction (Preview)
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

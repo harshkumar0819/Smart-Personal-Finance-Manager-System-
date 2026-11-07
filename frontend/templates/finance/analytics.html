@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% import "macros/components.html" as ui %}
+
+{% block title %}Analytics & Reports — FinWise Smart Personal Finance{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Header Banner -->
+    <div class="bg-gradient-to-r from-indigo-600 to-blue-700 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-semibold uppercase tracking-wider text-indigo-100 mb-3 border border-white/20">
+                <span class="w-2 h-2 rounded-full bg-indigo-300"></span>
+                Visual Analytics & Intelligence
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Analytics & Financial Reports
+            </h1>
+            <p class="text-indigo-100 text-sm sm:text-base mt-2 max-w-2xl leading-relaxed">
+                Visualize monthly cash flow comparisons, expense distributions by category, and long-term financial health.
+            </p>
+        </div>
+
+        <div class="shrink-0 flex items-center gap-2.5">
+            <a href="{{ url_for('finance.export_transactions_csv') }}" 
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white text-indigo-900 text-xs font-bold shadow-xs hover:bg-indigo-50 transition-colors">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Export All (CSV)
+            </a>
+            <span class="px-3.5 py-2 rounded-xl bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30 hidden sm:inline-block">
+                {{ summary.all_transactions_count }} Total Entries
+            </span>
+        </div>
+    </div>
+
+    <!-- Analytics KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {{ ui.kpi_card(
+            title="Total Net Worth", 
+            value="₹" ~ "{:,.2f}".format(summary.total_balance), 
+            subtitle="Cumulative Balance", 
+            icon_name="wallet", 
+            trend_direction="up" if summary.total_balance >= 0 else "down", 
+            trend_text="Live", 
+            color="emerald" if summary.total_balance >= 0 else "rose"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Lifetime Income", 
+            value="₹" ~ "{:,.2f}".format(summary.total_income), 
+            subtitle="Total Inflow", 
+            icon_name="trending-up", 
+            trend_direction="up", 
+            trend_text="Debited", 
+            color="indigo"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Lifetime Expenses", 
+            value="₹" ~ "{:,.2f}".format(summary.total_expenses), 
+            subtitle="Total Outflow", 
+            icon_name="trending-down", 
+            trend_direction="down", 
+            trend_text="Credited", 
+            color="rose"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Active Budgets", 
+            value=budgets|length|string ~ " Categories", 
+            subtitle="Monitoring Limits", 
+            icon_name="target", 
+            trend_direction="up", 
+            trend_text="Active", 
+            color="amber"
+        ) }}
+    </div>
+
+    <!-- Chart.js Visualizations Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Cash Flow Bar/Line Chart (2 Cols on Large) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Monthly Cash Flow Trend</h3>
+                    <p class="text-xs text-slate-500">Income vs. Expense over the last 6 months</p>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100">
+                    Live Database Data
+                </span>
+            </div>
+            <div class="relative h-64 sm:h-80 w-full">
+                <canvas id="cashFlowChart" 
+                        data-labels='{{ summary.charts.cash_flow.labels | tojson }}'
+                        data-income='{{ summary.charts.cash_flow.income | tojson }}'
+                        data-expenses='{{ summary.charts.cash_flow.expenses | tojson }}'></canvas>
+            </div>
+        </div>
+
+        <!-- Expense Category Breakdown Doughnut (1 Col on Large) -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Expense Breakdown</h3>
+                    <p class="text-xs text-slate-500">Distribution across categories</p>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
+                    Category Share
+                </span>
+            </div>
+            <div class="relative h-64 sm:h-80 w-full flex items-center justify-center">
+                <canvas id="categoryChart"
+                        data-labels='{{ summary.charts.categories.labels | tojson }}'
+                        data-values='{{ summary.charts.categories.data | tojson }}'
+                        data-colors='{{ summary.charts.categories.colors | tojson }}'></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Monthly Cash Flow Numerical Ledger Table -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-800">Six-Month Financial Breakdown</h3>
+            <p class="text-xs text-slate-500">Tabular monthly performance summary</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                        <th class="py-3 px-4">Month</th>
+                        <th class="py-3 px-4 text-right">Total Income</th>
+                        <th class="py-3 px-4 text-right">Total Expenses</th>
+                        <th class="py-3 px-4 text-right">Net Savings</th>
+                        <th class="py-3 px-4 text-center">Savings Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set labels = summary.charts.cash_flow.labels %}
+                    {% set incomes = summary.charts.cash_flow.income %}
+                    {% set expenses = summary.charts.cash_flow.expenses %}
+                    {% for i in range(labels|length) %}
+                        {% set inc = incomes[i] %}
+                        {% set exp = expenses[i] %}
+                        {% set net = inc - exp %}
+                        {% set rate = ((net / inc) * 100) if inc > 0 else 0 %}
+                        <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
+                            <td class="py-3.5 px-4 font-bold text-slate-800 text-sm">{{ labels[i] }} 2026</td>
+                            <td class="py-3.5 px-4 text-right font-medium text-emerald-600 text-sm">₹{{ "{:,.2f}".format(inc) }}</td>
+                            <td class="py-3.5 px-4 text-right font-medium text-rose-600 text-sm">₹{{ "{:,.2f}".format(exp) }}</td>
+                            <td class="py-3.5 px-4 text-right font-bold text-sm {% if net >= 0 %}text-emerald-700{% else %}text-rose-700{% endif %}">
+                                {% if net >= 0 %}+{% endif %}₹{{ "{:,.2f}".format(net) }}
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold
+                                    {% if rate >= 20 %} bg-emerald-100 text-emerald-800
+                                    {% elif rate > 0 %} bg-amber-100 text-amber-800
+                                    {% else %} bg-slate-100 text-slate-600 {% endif %}">
+                                    {{ "{:.1f}%".format(rate) if inc > 0 else "0.0%" }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
