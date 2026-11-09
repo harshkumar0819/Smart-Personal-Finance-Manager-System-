@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% import "macros/components.html" as ui %}
+
+{% block title %}Savings Goals — FinWise Smart Personal Finance{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="bg-gradient-to-r from-teal-600 to-emerald-700 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-semibold uppercase tracking-wider text-teal-100 mb-3 border border-white/20">
+                <span class="w-2 h-2 rounded-full bg-teal-300"></span>
+                Financial Milestones
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Savings Goals
+            </h1>
+            <p class="text-teal-100 text-sm sm:text-base mt-2 max-w-2xl leading-relaxed">
+                Define savings targets for big purchases, emergency reserves, and life milestones. Track your progress with every deposit.
+            </p>
+        </div>
+
+        <div class="shrink-0">
+            <a href="#new-goal-card" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-teal-800 text-xs font-bold shadow-sm hover:bg-teal-50 transition-colors">
+                <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                + New Savings Goal
+            </a>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {{ ui.kpi_card(
+            title="Total Savings Target", 
+            value="₹" ~ "{:,.2f}".format(total_target), 
+            subtitle="Combined Target Value", 
+            icon_name="target", 
+            trend_direction="up", 
+            trend_text="Goal", 
+            color="indigo"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Total Amount Saved", 
+            value="₹" ~ "{:,.2f}".format(total_saved), 
+            subtitle="Current Accumulated Funds", 
+            icon_name="wallet", 
+            trend_direction="up", 
+            trend_text="Saved", 
+            color="emerald"
+        ) }}
+
+        {{ ui.kpi_card(
+            title="Goals Completed", 
+            value=achieved_count|string ~ " of " ~ goals|length|string ~ " Goals", 
+            subtitle="Milestones Reached", 
+            icon_name="trending-up", 
+            trend_direction="up", 
+            trend_text="Milestones", 
+            color="amber"
+        ) }}
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div id="new-goal-card" class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm h-fit">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                    🎯
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Create Savings Goal</h3>
+                    <p class="text-xs text-slate-500">Set a target to begin accumulating funds</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('finance.add_goal') }}" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label for="title" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Goal Title <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="title" 
+                        name="title" 
+                        placeholder="e.g. Emergency Fund, New Laptop" 
+                        required 
+                        class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="target_amount" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Target Amount (₹) <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="1" 
+                        id="target_amount" 
+                        name="target_amount" 
+                        placeholder="e.g. 50000.00" 
+                        required 
+                        class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="current_amount" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Starting Amount Saved (₹)
+                    </label>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        id="current_amount" 
+                        name="current_amount" 
+                        placeholder="0.00" 
+                        value="0.00" 
+                        class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="target_date" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Target Deadline (Optional)
+                    </label>
+                    <input 
+                        type="date" 
+                        id="target_date" 
+                        name="target_date" 
+                        class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="notes" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Purpose / Notes
+                    </label>
+                    <textarea 
+                        id="notes" 
+                        name="notes" 
+                        rows="2" 
+                        placeholder="Why are you saving for this goal?" 
+                        class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"></textarea>
+                </div>
+
+                <button 
+                    type="submit" 
+                    class="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Save Target Goal
+                </button>
+            </form>
+        </div>
+        <div class="lg:col-span-2 space-y-5">
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Active Savings Milestones</h3>
+                        <p class="text-xs text-slate-500">Track and deposit toward each financial target</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                        {{ goals|length }} Goals Active
+                    </span>
+                </div>
+
+                {% if goals %}
+                <div class="space-y-5">
+                    {% for g in goals %}
+                    <div class="p-5 rounded-2xl border border-slate-200/90 hover:border-slate-300 transition-all bg-white shadow-xs">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm
+                                    {% if g.is_achieved %} bg-emerald-100 text-emerald-800 {% else %} bg-indigo-50 text-indigo-700 {% endif %}">
+                                    {% if g.is_achieved %}✓{% else %}🎯{% endif %}
+                                </span>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-base leading-tight">{{ g.title }}</h4>
+                                    <p class="text-xs text-slate-400">Target Date: {{ g.target_date_str }}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold
+                                    {% if g.is_achieved %} bg-emerald-100 text-emerald-800 border border-emerald-200
+                                    {% else %} bg-indigo-50 text-indigo-700 border border-indigo-200 {% endif %}">
+                                    {{ g.status_label }}
+                                </span>
+
+                                <form method="POST" action="{{ url_for('finance.delete_goal_action', goal_id=g._id) }}" onsubmit="return confirm('Delete this savings goal?');" class="inline">
+                                    <button type="submit" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors" title="Delete goal">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5 mb-4">
+                            <div class="flex justify-between items-baseline text-xs font-bold">
+                                <span class="text-slate-700">
+                                    ₹{{ "{:,.2f}".format(g.current_amount) }} <span class="text-slate-400 font-normal">saved of</span> ₹{{ "{:,.2f}".format(g.target_amount) }}
+                                </span>
+                                <span class="{% if g.is_achieved %} text-emerald-600 {% else %} text-indigo-600 {% endif %}">
+                                    {{ g.percentage }}%
+                                </span>
+                            </div>
+
+                            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                <div class="{% if g.is_achieved %} bg-emerald-500 {% else %} bg-indigo-600 {% endif %} h-3 rounded-full transition-all duration-500" 
+                                     style="width: {{ g.bar_percentage }}%"></div>
+                            </div>
+
+                            <div class="flex justify-between items-center text-[11px] text-slate-500 pt-0.5">
+                                <span>
+                                    {% if not g.is_achieved %}
+                                    Remaining: <strong class="text-slate-700 font-semibold">₹{{ "{:,.2f}".format(g.remaining) }}</strong> to reach target
+                                    {% else %}
+                                    <strong class="text-emerald-700">Target reached! You can continue adding extra savings.</strong>
+                                    {% endif %}
+                                </span>
+                                {% if g.notes %}
+                                <span class="truncate max-w-xs text-slate-400 italic">"{{ g.notes }}"</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <span class="text-xs font-semibold text-slate-600">Add to this savings goal:</span>
+                            <form method="POST" action="{{ url_for('finance.deposit_goal', goal_id=g._id) }}" class="flex items-center gap-2">
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-xs text-slate-400 font-bold">₹</span>
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="1" 
+                                        name="amount" 
+                                        placeholder="Amount" 
+                                        required 
+                                        class="pl-7 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 w-28 sm:w-36">
+                                </div>
+                                <button 
+                                    type="submit" 
+                                    class="py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-xs flex items-center gap-1 shrink-0">
+                                    <span>+ Deposit</span>
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="py-12 px-4 text-center text-slate-500">
+                    <div class="flex flex-col items-center justify-center space-y-2">
+                        <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mb-1 text-xl">
+                            🎯
+                        </div>
+                        <p class="font-bold text-slate-800">No savings goals created yet</p>
+                        <p class="text-xs text-slate-400 max-w-sm">Use the form on the left to set a target for an emergency fund, travel, or vehicle. You can deposit money into it at any time.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-500 flex items-center justify-between">
+                <span>💡 <strong>Pro-tip:</strong> Break larger goals into smaller monthly deposits to stay consistent.</span>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

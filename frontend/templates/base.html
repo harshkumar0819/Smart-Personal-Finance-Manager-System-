@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FinWise — Smart Personal Finance and Expense Management System{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+
+    <div class="flex flex-1 min-h-screen">
+
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
+
+            <div>
+                <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100">
+                    <a href="{{ url_for('main.index') }}" class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">F</div>
+                        <div>
+                            <span class="text-lg font-extrabold tracking-tight text-slate-900">FinWise</span>
+                            <span class="block text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">Smart Finance</span>
+                        </div>
+                    </a>
+
+                    <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-slate-600 p-1.5 rounded-lg focus:outline-none">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <nav class="p-4 space-y-1.5">
+
+                    <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {% if request.endpoint == 'main.index' %}bg-emerald-50 text-emerald-700 border border-emerald-100/60{% else %}text-slate-600 hover:bg-slate-100/80 hover:text-slate-900{% endif %}">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a2 2 0 011-1h2a2 2 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        Dashboard
+                    </a>
+
+                    <a href="{{ url_for('finance.income') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {% if request.endpoint == 'finance.income' %}bg-emerald-50 text-emerald-700 border border-emerald-100/60{% else %}text-slate-600 hover:bg-slate-100/80 hover:text-slate-900{% endif %}">
+                        <svg class="w-5 h-5 {% if request.endpoint == 'finance.income' %}text-emerald-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                        </svg>
+                        Income Tracking
+                    </a>
+
+                    <a href="{{ url_for('finance.expenses') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {% if request.endpoint == 'finance.expenses' %}bg-emerald-50 text-emerald-700 border border-emerald-100/60{% else %}text-slate-600 hover:bg-slate-100/80 hover:text-slate-900{% endif %}">
+                        <svg class="w-5 h-5 {% if request.endpoint == 'finance.expenses' %}text-emerald-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+                        </svg>
+                        Expenses Log
+                    </a>
+
+                    <a href="{{ url_for('finance.budgets') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {% if request.endpoint == 'finance.budgets' %}bg-emerald-50 text-emerald-700 border border-emerald-100/60{% else %}text-slate-600 hover:bg-slate-100/80 hover:text-slate-900{% endif %}">
+                        <svg class="w-5 h-5 {% if request.endpoint == 'finance.budgets' %}text-emerald-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Monthly Budgets
+                    </a>
+
+                    <a href="{{ url_for('finance.goals') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {% if request.endpoint == 'finance.goals' %}bg-emerald-50 text-emerald-700 border border-emerald-100/60{% else %}text-slate-600 hover:bg-slate-100/80 hover:text-slate-900{% endif %}">
+                        <svg class="w-5 h-5 {% if request.endpoint == 'finance.goals' %}text-emerald-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Savings Goals
+                    </a>
+
+                    <a href="{{ url_for('finance.analytics') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors {% if request.endpoint == 'finance.analytics' %}bg-emerald-50 text-emerald-700 border border-emerald-100/60{% else %}text-slate-600 hover:bg-slate-100/80 hover:text-slate-900{% endif %}">
+                        <svg class="w-5 h-5 {% if request.endpoint == 'finance.analytics' %}text-emerald-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
+                        </svg>
+                        Analytics & Reports
+                    </a>
+
+                    <div class="pt-4 pb-2">
+                        <span class="px-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Account</span>
+                    </div>
+
+                    {% if current_user %}
+                    <div class="px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-100 mb-1">
+                        <div class="text-xs font-bold text-slate-800 truncate">{{ current_user.name }}</div>
+                        <div class="text-[10px] text-slate-500 truncate">{{ current_user.email }}</div>
+                    </div>
+
+                    <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
+                        <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Log Out
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 transition-colors">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        Log In
+                    </a>
+
+                    <a href="{{ url_for('auth.register') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 transition-colors">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                        Register Account
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+
+            <div class="p-4 border-t border-slate-100">
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div class="flex items-center justify-between text-xs mb-1">
+                        <span class="font-bold text-slate-700">FinWise System</span>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">Active</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 leading-tight">Personal Finance &amp; Expense Manager</p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col md:pl-64">
+
+            <header class="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <button id="open-sidebar-btn" class="md:hidden text-slate-500 hover:text-slate-800 p-2 rounded-xl border border-slate-200 focus:outline-none">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-800 leading-tight">Dashboard Overview</h2>
+                        <p class="text-xs text-slate-500 hidden sm:block">Smart Personal Finance and Expense Management System</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    {% if current_user %}
+                    <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+                        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                            {{ current_user.name[:2].upper() }}
+                        </div>
+                        <div class="hidden md:block text-left">
+                            <span class="text-xs font-bold text-slate-800 block leading-tight">{{ current_user.name }}</span>
+                            <span class="text-[10px] text-slate-500 block leading-tight">{{ current_user.email }}</span>
+                        </div>
+                        <a href="{{ url_for('auth.logout') }}" class="ml-1 text-xs text-rose-600 hover:text-rose-700 font-semibold px-2.5 py-1 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors">Logout</a>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+                        <a href="{{ url_for('auth.login') }}" class="text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">Log In</a>
+                        <a href="{{ url_for('auth.register') }}" class="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg shadow-sm transition-colors">Sign Up</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <div class="px-4 sm:px-8 pt-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert-box mb-4 flex items-center justify-between p-4 rounded-xl text-sm font-medium transition-opacity
+                                {% if category == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+                                {% elif category == 'danger' or category == 'error' %}bg-rose-50 text-rose-800 border border-rose-200
+                                {% elif category == 'warning' %}bg-amber-50 text-amber-800 border border-amber-200
+                                {% else %}bg-indigo-50 text-indigo-800 border border-indigo-200{% endif %}">
+                                <span>{{ message }}</span>
+                                <button type="button" data-dismiss="alert" class="text-slate-400 hover:text-slate-600 font-bold ml-4 text-base">&times;</button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <main class="flex-1 p-4 sm:p-8">
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="bg-white border-t border-slate-200 py-4 px-4 sm:px-8 text-center sm:flex sm:justify-between sm:items-center text-xs text-slate-500">
+                <span>&copy; 2026 FinWise — Smart Personal Finance and Expense Management System</span>
+                <span class="hidden sm:inline">Developed by Harsh Kumar</span>
+            </footer>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

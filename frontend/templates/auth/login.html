@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Log In — FinWise Smart Personal Finance{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex items-center justify-center py-6 px-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 sm:p-10">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-emerald-600 text-white rounded-2xl font-bold text-2xl shadow-sm mb-4">
+                F
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1.5">
+                Sign in to manage your income, expenses, and personal budgets.
+            </p>
+        </div>
+          <form method="POST" action="{{ url_for('auth.login', next=next) }}" class="space-y-5">
+            <div class="space-y-1.5">
+                <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                    Email Address <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        value="{{ email or '' }}" 
+                        placeholder="you@example.com" 
+                        required 
+                        autocomplete="email"
+                        class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400
+                               transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Password <span class="text-rose-500">*</span>
+                    </label>
+                </div>
+                <div class="relative">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="••••••••" 
+                        required 
+                        autocomplete="current-password"
+                        class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400
+                               transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+            </div>
+
+            <button 
+                type="submit" 
+                class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                <span>Sign In to FinWise</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+            </button>
+        </form>
+        <div class="mt-8 pt-6 border-t border-slate-100 text-center space-y-3">
+            <p class="text-xs text-slate-600">
+                Don't have an account yet? 
+                <a href="{{ url_for('auth.register') }}" class="font-bold text-emerald-600 hover:text-emerald-700 hover:underline">
+                    Create an Account
+                </a>
+            </p>
+            <p class="text-xs">
+                <a href="{{ url_for('main.index') }}" class="text-slate-400 hover:text-slate-600 inline-flex items-center gap-1">
+                    <span>&larr;</span> Back to Dashboard Overview
+                </a>
+            </p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
