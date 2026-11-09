@@ -1,8 +1,4 @@
-{# ===================================================================
-   FinWise - Reusable Jinja2 UI Component Macros
-   =================================================================== #}
 
-{# 1. KPI Metric Card Macro #}
 {% macro kpi_card(title, value, subtitle, icon_name, trend_direction='up', trend_text='', color='emerald') %}
 <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200">
     <div class="flex items-center justify-between mb-4">
@@ -51,9 +47,6 @@
     </div>
 </div>
 {% endmacro %}
-
-
-{# 2. Status Badge Macro #}
 {% macro badge(text, variant='emerald') %}
 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
     {% if variant == 'emerald' %} bg-emerald-50 text-emerald-700 border border-emerald-200
@@ -65,9 +58,6 @@
     {{ text }}
 </span>
 {% endmacro %}
-
-
-{# 3. Standard Form Input Macro #}
 {% macro input_field(name, label, type='text', placeholder='', value='', required=false, error=none, help_text='') %}
 <div class="space-y-1.5">
     <label for="{{ name }}" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
@@ -91,8 +81,6 @@
 </div>
 {% endmacro %}
 
-
-{# 4. Transaction Row Macro #}
 {% macro transaction_row(title, category, date, amount, type='expense', status='Completed') %}
 <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
     <td class="py-3.5 px-4">

@@ -4,7 +4,7 @@
 {% block title %}Expenses Log — FinWise Smart Personal Finance{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
+<div class="finwise-expenses space-y-8">
     <div class="bg-gradient-to-r from-rose-600 to-pink-700 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-semibold uppercase tracking-wider text-rose-100 mb-3 border border-white/20">
@@ -385,7 +385,6 @@ function closeEditExpenseModal() {
     modal.classList.add('hidden');
 }
 
-// Close modal when pressing Escape
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeEditExpenseModal();
